@@ -1,0 +1,5 @@
+config CUSTOM_MTK_KERNEL_HALL
+	bool "CUSTOM_MTK_KERNEL_HALL Config"
+	default n
+	help
+	  hall sensor for MTK pakage.

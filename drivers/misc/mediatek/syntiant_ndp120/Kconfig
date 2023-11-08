@@ -1,0 +1,5 @@
+config SYNTIANT_NDP120
+    bool "Enable SYNTIANT_NDP120"
+	default n
+	help
+	  SYNTIANT_NDP120 driver is a DSP feature.
