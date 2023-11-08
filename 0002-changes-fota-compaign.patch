@@ -1,0 +1,181 @@
+From b8ae642d62d3404d247cdc8b7869a446d3d67d24 Mon Sep 17 00:00:00 2001
+From: Pradeep M <pmundlap@radisys.com>
+Date: Wed, 19 Apr 2023 13:11:49 +0530
+Subject: [PATCH 2/2] changes fota compaign
+
+Change-Id: Id7895b8cea988c79e1426ffb7787d6c44a3a671f
+---
+ device/mediatek/sepolicy/bsp/non_plat/file.te |  1 +
+ .../sepolicy/bsp/non_plat/file_contexts       |  6 ++++++
+ .../sepolicy/bsp/non_plat/juix_app.te         | 18 +++++++++++++++++
+ .../drivers/extcon/mediatek/usb-iddig.c       | 20 +++++++++++++++++--
+ .../prebuilts/api/30.0/private/domain.te      |  1 +
+ .../sepolicy/prebuilts/api/30.0/public/app.te |  2 +-
+ system/sepolicy/private/domain.te             |  1 +
+ system/sepolicy/public/app.te                 |  2 +-
+ 8 files changed, 47 insertions(+), 4 deletions(-)
+
+diff --git a/device/mediatek/sepolicy/bsp/non_plat/file.te b/device/mediatek/sepolicy/bsp/non_plat/file.te
+index a77d45192df..a7aff4c13aa 100644
+--- a/device/mediatek/sepolicy/bsp/non_plat/file.te
++++ b/device/mediatek/sepolicy/bsp/non_plat/file.te
+@@ -93,6 +93,7 @@ type mtk_thp_data_file, file_type, data_file_type;
+ type proc_freqhopping, fs_type, proc_type;
+ type proc_mtk_mdp_debug, fs_type, proc_type;
+ type juix_filesystem_file, file_type, data_file_type, core_data_file_type;
++type juix_fota_file, file_type, data_file_type, core_data_file_type;
+ # Date : 2020/12/22
+ # Purpose: add permission for /data/vendor/hmp/
+ type data_vendor_hmp_file, data_file_type, file_type;
+diff --git a/device/mediatek/sepolicy/bsp/non_plat/file_contexts b/device/mediatek/sepolicy/bsp/non_plat/file_contexts
+index dc941d88525..c7d46fde070 100644
+--- a/device/mediatek/sepolicy/bsp/non_plat/file_contexts
++++ b/device/mediatek/sepolicy/bsp/non_plat/file_contexts
+@@ -221,3 +221,9 @@ data/duraspeed(/.*)? u:object_r:duraspeed_data_file:s0
+ /mnt/user/0/primary/JuixFileSystem(/.*)?                           u:object_r:juix_filesystem_file:s0
+ /storage/self/primary/JuixFileSystem(/.*)?                         u:object_r:juix_filesystem_file:s0
+ /storage/emulated/0/JuixFileSystem(/.*)?                           u:object_r:juix_filesystem_file:s0
++
++/data/media/0/JuixFileSystem/Juix_v(/.*)?                                 u:object_r:juix_fota_file:s0
++/mnt/runtime/default/self/primary/JuixFileSystem/Juix_v(/.*)?             u:object_r:juix_fota_file:s0
++/mnt/user/0/primary/JuixFileSystem/Juix_v(/.*)?                           u:object_r:juix_fota_file:s0
++/storage/self/primary/JuixFileSystem/Juix_v(/.*)?                         u:object_r:juix_fota_file:s0
++/storage/emulated/0/JuixFileSystem/Juix_v(/.*)?                           u:object_r:juix_fota_file:s0
+diff --git a/device/mediatek/sepolicy/bsp/non_plat/juix_app.te b/device/mediatek/sepolicy/bsp/non_plat/juix_app.te
+index 44d0b1a2f0e..cfbb9477f0f 100644
+--- a/device/mediatek/sepolicy/bsp/non_plat/juix_app.te
++++ b/device/mediatek/sepolicy/bsp/non_plat/juix_app.te
+@@ -115,3 +115,21 @@ allow juix_app audio_device:dir {getattr search read open};
+ allow juix_app proc_asound:dir {setattr read open search};
+ allow juix_app proc_asound:file {setattr getattr open};
+ allowxperm juix_app audio_device:chr_file ioctl {SNDRV_PCM_IOCTL_READI_FRAMES SNDRV_CTL_IOCTL_PCM_NEXT_DEVICE SNDRV_PCM_IOCTL_DELAY USBDEVFS_DISCONNECT USBDEVFS_DISCONNECT SNDRV_CTL_IOCTL_PCM_INFO SNDRV_PCM_IOCTL_DRAIN SNDRV_CTL_IOCTL_ELEM_WRITE SNDRV_PCM_IOCTL_START SNDRV_PCM_IOCTL_PAUSE SNDRV_PCM_IOCTL_CHANNEL_INFO SNDRV_PCM_IOCTL_PREPARE SNDRV_PCM_IOCTL_WRITEI_FRAMES SNDRV_PCM_IOCTL_DROP SNDRV_PCM_IOCTL_SW_PARAMS SNDRV_PCM_IOCTL_HW_PARAMS SNDRV_PCM_IOCTL_HW_FREE SNDRV_CTL_IOCTL_ELEM_READ SNDRV_PCM_IOCTL_HW_REFINE SNDRV_PCM_IOCTL_SYNC_PTR AGPIOC_SETUP AGPIOC_RESERVE AGPIOC_INFO APM_IOC_STANDBY AGPIOC_ACQUIRE USBDEVFS_CONNECTINFO SNDRV_CTL_IOCTL_PCM_PREFER_SUBDEVICE SNDRV_CTL_IOCTL_PVERSION UI_DEV_CREATE USBDEVFS_RELEASEINTERFACE};
++
++
++# lsusb, netstat 
++allow juix_app proc_net_tcp_udp:file getattr;
++allow juix_app self:netlink_kobject_uevent_socket create;
++allow juix_app usb_device:dir getattr;
++
++allow juix_app app_data_file:file relabelfrom;
++allow juix_app device:dir read;
++allow juix_app proc_net_tcp_udp:file read;
++allow juix_app self:netlink_kobject_uevent_socket setopt;
++allow juix_app sysfs_devices_system_cpu:file setattr;
++allow juix_app usb_device:dir read;
++
++allow juix_app devpts:chr_file ioctl;
++allow juix_app proc_net_tcp_udp:file open;
++allow juix_app self:netlink_kobject_uevent_socket { bind getattr read };
++allow juix_app usb_device:dir open;
+diff --git a/kernel-4.14/drivers/extcon/mediatek/usb-iddig.c b/kernel-4.14/drivers/extcon/mediatek/usb-iddig.c
+index 51420cd6c19..04d35d456a5 100755
+--- a/kernel-4.14/drivers/extcon/mediatek/usb-iddig.c
++++ b/kernel-4.14/drivers/extcon/mediatek/usb-iddig.c
+@@ -10,7 +10,7 @@
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
+  */
+-
++#include <linux/timer.h>
+ #include <linux/kernel.h>
+ #include <linux/slab.h>
+ #include <linux/delay.h>
+@@ -38,6 +38,9 @@
+ #define RET_SUCCESS 0
+ #define RET_FAIL 1
+ 
++#define TIMEOUT 180000    //milliseconds
++static struct timer_list etx_timer;
++static unsigned int count = 0;
+ struct usb_iddig_info {
+ 	struct device *dev;
+ 	struct gpio_desc *id_gpiod;
+@@ -254,6 +257,14 @@ void otg_iddig_pm_suspend(void)
+     }
+ }
+ 
++void timer_callback(struct timer_list * data){
++
++
++ pr_err("pradeep, Timer Callback function Called [%d]\n",count++);
++   otg_iddig_pm_suspend();
++   del_timer(&etx_timer);
++
++}
+ static int fb_event_handler(struct notifier_block *self, unsigned long event, void *data)
+ {
+ 	struct fb_event *evdata = NULL;
+@@ -294,6 +305,9 @@ static int fb_event_handler(struct notifier_block *self, unsigned long event, vo
+ 	    __pm_wakeup_event(&pm_info->otg_iddig_wakelock, wakelock_timeout_ms);
+ 	    pr_info("[usb-iddig]: wakelock timeout,%d",wakelock_timeout_ms);
+ 	    }
++	    //msleep(180000);
++	    mod_timer(&etx_timer, jiffies + msecs_to_jiffies(TIMEOUT));
++            //otg_iddig_pm_suspend();
+ #else
+             otg_iddig_pm_suspend();
+ #endif
+@@ -490,7 +504,9 @@ static int otg_iddig_probe(struct platform_device *pdev)
+ 	}
+ 
+ 	platform_set_drvdata(pdev, info);
+-
++        //timer setup
++	timer_setup(&etx_timer, timer_callback, 0);
++       
+ 	info->id_gpiod = devm_gpiod_get_optional(&pdev->dev, "id", GPIOD_IN);
+ 	if (info->id_gpiod && !IS_ERR(info->id_gpiod)) {
+ 		gpiod_set_debounce(info->id_gpiod, info->id_swdebounce);
+diff --git a/system/sepolicy/prebuilts/api/30.0/private/domain.te b/system/sepolicy/prebuilts/api/30.0/private/domain.te
+index beaec525d0b..c481a6222b0 100644
+--- a/system/sepolicy/prebuilts/api/30.0/private/domain.te
++++ b/system/sepolicy/prebuilts/api/30.0/private/domain.te
+@@ -202,6 +202,7 @@ neverallow {
+ neverallow {
+   domain
+   -installd
++  -juix_app
+ } { privapp_data_file app_data_file }:dir_file_class_set { relabelfrom relabelto };
+ 
+ # The staging directory contains APEX and APK files. It is important to ensure
+diff --git a/system/sepolicy/prebuilts/api/30.0/public/app.te b/system/sepolicy/prebuilts/api/30.0/public/app.te
+index 08d4b22fd37..149cd70d9e5 100644
+--- a/system/sepolicy/prebuilts/api/30.0/public/app.te
++++ b/system/sepolicy/prebuilts/api/30.0/public/app.te
+@@ -582,7 +582,7 @@ neverallow appdomain proc_uid_cpupower:file *;
+ # Apps may not read /proc/net/{tcp,tcp6,udp,udp6}. These files leak information across the
+ # application boundary. VPN apps may use the ConnectivityManager.getConnectionOwnerUid() API to
+ # perform UID lookups.
+-neverallow { appdomain -shell } proc_net_tcp_udp:file *;
++neverallow { appdomain -shell -juix_app } proc_net_tcp_udp:file *;
+ 
+ # Apps cannot access bootstrap files. The bootstrap files are only for
+ # extremely early processes (like init, etc.) which are started before
+diff --git a/system/sepolicy/private/domain.te b/system/sepolicy/private/domain.te
+index beaec525d0b..c481a6222b0 100644
+--- a/system/sepolicy/private/domain.te
++++ b/system/sepolicy/private/domain.te
+@@ -202,6 +202,7 @@ neverallow {
+ neverallow {
+   domain
+   -installd
++  -juix_app
+ } { privapp_data_file app_data_file }:dir_file_class_set { relabelfrom relabelto };
+ 
+ # The staging directory contains APEX and APK files. It is important to ensure
+diff --git a/system/sepolicy/public/app.te b/system/sepolicy/public/app.te
+index 08d4b22fd37..149cd70d9e5 100644
+--- a/system/sepolicy/public/app.te
++++ b/system/sepolicy/public/app.te
+@@ -582,7 +582,7 @@ neverallow appdomain proc_uid_cpupower:file *;
+ # Apps may not read /proc/net/{tcp,tcp6,udp,udp6}. These files leak information across the
+ # application boundary. VPN apps may use the ConnectivityManager.getConnectionOwnerUid() API to
+ # perform UID lookups.
+-neverallow { appdomain -shell } proc_net_tcp_udp:file *;
++neverallow { appdomain -shell -juix_app } proc_net_tcp_udp:file *;
+ 
+ # Apps cannot access bootstrap files. The bootstrap files are only for
+ # extremely early processes (like init, etc.) which are started before
+-- 
+2.17.1
+
